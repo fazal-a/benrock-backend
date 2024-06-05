@@ -7,7 +7,7 @@ dotenv.config({
 
 const connectDB = async () => {
   try {
-    const { connection } = await mongoose.connect("mongodb+srv://osamawaseem692:J21UyXsga2Bbs5Gr@trackkrr.apvgk4z.mongodb.net/socio");
+    const { connection } = await mongoose.connect("mongodb+srv://fazal:Ethan%40786%21%40%23@cluster0.n5f37ce.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
     console.log("\x1b[32m%s\x1b[0m", "Database Connected " + connection.host);
   } catch (error) {
     console.log("Error connecting database: " + error);
