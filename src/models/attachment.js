@@ -9,9 +9,9 @@ const attachmentSchema = new Schema(
       enum: ["photo", "video"],
       default: "photo"
     },
-    clicks: Number,
-    path: String,
-    thumbnail: String
+    clicks: { type: Number, default: 0 },
+    path: { type: String, default: "" },
+    thumbnail: { type: String, default: "" },
   },
   { timestamps: true }
 );

@@ -15,5 +15,8 @@ router
 router
   .route("/addClick/:attachmentId")
   .post(isAuthenticated, attachment?.addClick);
+router
+  .route("/getPaginatedAttachments")
+  .get(isAuthenticated, attachment?.getPaginatedAttachments);
 
 module.exports = router;

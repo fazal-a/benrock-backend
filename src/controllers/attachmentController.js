@@ -29,7 +29,8 @@ const uploadPhoto = async (req, res) => {
             let insert = urls?.map((value) => ({
               createdBy: user,
               path: value,
-              type: req?.body?.type
+              type: req?.body?.type,
+              clicks: 0,
             }));
             let inserted = await Attachment.insertMany(insert);
             if (inserted)
@@ -58,7 +59,8 @@ const uploadPhoto = async (req, res) => {
                 createdBy: user,
                 path: value,
                 type: req?.body?.type,
-                thumbnail: urls?.thumbnails[index]
+                thumbnail: urls?.thumbnails[index],
+                clicks: 0,
               }));
               let inserted = await Attachment.insertMany(insert);
               if (inserted)
@@ -200,11 +202,48 @@ const getNearByAttachments = async (req, res) => {
   }
 };
 
+const getPaginatedAttachments = async (req, res) => {
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 5;
+  const skip = (page - 1) * limit;
+
+  try {
+    const attachments = await Attachment.find({})
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('createdBy', 'name email photo')
+      .lean();  // Add .lean() to get plain JavaScript objects instead of Mongoose documents
+
+    const total = await Attachment.countDocuments();
+
+    res.status(200).json({
+      status: "success",
+      data: attachments.map(attachment => ({
+        ...attachment,
+        clicks: attachment.clicks || 0  // Ensure the clicks field is included correctly
+      })),
+      page,
+      pages: Math.ceil(total / limit),
+      total,
+    });
+  } catch (error) {
+    console.error("Error fetching paginated attachments:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Server error while retrieving paginated attachments",
+    });
+  }
+};
+
+
+
 // export default { uploadPhoto, getAttachmentsByUser };
 module.exports = {
   uploadPhoto,
   getAttachmentsByUser,
   getRecentAttachments,
   getNearByAttachments,
-  addClick
+  addClick,
+  getPaginatedAttachments
 };
