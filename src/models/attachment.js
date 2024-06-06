@@ -10,7 +10,8 @@ const attachmentSchema = new Schema(
       default: "photo"
     },
     clicks: { type: Number, default: 0 },
-    path: { type: String, default: "" },
+    likes: { type: Number, default: 0 },
+      path: { type: String, default: "" },
     thumbnail: { type: String, default: "" },
   },
   { timestamps: true }

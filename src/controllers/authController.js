@@ -34,8 +34,7 @@ const register = async (req, res) => {
       email,
       password,
       role,
-
-
+      likes: []
     }
     if (latitude !== undefined && longitude !== undefined) {
       payload.location = {

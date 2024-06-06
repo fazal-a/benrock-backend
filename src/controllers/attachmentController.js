@@ -31,6 +31,7 @@ const uploadPhoto = async (req, res) => {
               path: value,
               type: req?.body?.type,
               clicks: 0,
+              likes:0,
             }));
             let inserted = await Attachment.insertMany(insert);
             if (inserted)
@@ -61,6 +62,7 @@ const uploadPhoto = async (req, res) => {
                 type: req?.body?.type,
                 thumbnail: urls?.thumbnails[index],
                 clicks: 0,
+                likes:0,
               }));
               let inserted = await Attachment.insertMany(insert);
               if (inserted)
@@ -122,42 +124,6 @@ const getAttachmentsByUser = async (req, res) => {
   }
 };
 
-const getRecentAttachments = async (req, res) => {
-  // #swagger.tags = ['photo']
-  try {
-    const attachments = await User.aggregate([
-      {
-        $lookup: {
-          from: "attachments", // Name of the attachments collection
-          localField: "_id",
-          foreignField: "createdBy",
-          as: "attachments"
-        }
-      },
-      {
-        $addFields: {
-          attachments: {
-            $slice: ["$attachments", -4] // Get the last 4 attachments
-          }
-        }
-      },
-      {
-        $project: {
-          // Include the fields you want to keep in the final result
-          _id: 1,
-          name: 1,
-          email: 1,
-          photo: 1,
-          attachments: 1
-        }
-      }
-    ]);
-
-    if (attachments) SuccessHandler(attachments, 200, res);
-  } catch (error) {
-    ErrorHandler(error, 500, req, res);
-  }
-};
 const getNearByAttachments = async (req, res) => {
   // #swagger.tags = ['photo'];
 
@@ -202,7 +168,7 @@ const getNearByAttachments = async (req, res) => {
   }
 };
 
-const getPaginatedAttachments = async (req, res) => {
+const getRecentAttachments = async (req, res) => {
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 5;
   const skip = (page - 1) * limit;
@@ -221,7 +187,8 @@ const getPaginatedAttachments = async (req, res) => {
       status: "success",
       data: attachments.map(attachment => ({
         ...attachment,
-        clicks: attachment.clicks || 0  // Ensure the clicks field is included correctly
+        clicks: attachment.clicks || 0,
+        likes: attachment.likes || 0
       })),
       page,
       pages: Math.ceil(total / limit),
@@ -242,20 +209,21 @@ const getPopularAttachments = async (req, res) => {
   const skip = (page - 1) * limit;
 
   try {
-    const attachments = await Attachment.find({})
-        .sort({ clicks: -1 })
+    const attachments = await Attachment.find({ likes: { $gt: 0 } })
+        .sort({ likes: -1 })
         .skip(skip)
         .limit(limit)
         .populate('createdBy', 'name email photo')
         .lean();  // Add .lean() to get plain JavaScript objects instead of Mongoose documents
 
-    const total = await Attachment.countDocuments();
+    const total = await Attachment.countDocuments({ likes: { $gt: 0 } });
 
     res.status(200).json({
       status: "success",
       data: attachments.map(attachment => ({
         ...attachment,
-        clicks: attachment.clicks || 0  // Ensure the clicks field is included correctly
+        clicks: attachment.clicks || 0,
+        likes: attachment.likes || 0
       })),
       page,
       pages: Math.ceil(total / limit),
@@ -276,9 +244,8 @@ const getPopularAttachments = async (req, res) => {
 module.exports = {
   uploadPhoto,
   getAttachmentsByUser,
-  getRecentAttachments,
   getNearByAttachments,
   addClick,
-  getPaginatedAttachments,
+  getRecentAttachments,
   getPopularAttachments
 };
