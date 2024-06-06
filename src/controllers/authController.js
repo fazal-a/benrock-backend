@@ -3,6 +3,7 @@ const User = require("../models/user");
 // import ErrorHandler from "../utils/ErrorHandler";
 const { ErrorHandler } = require("../utils/ErrorHandler");
 const { SuccessHandler } = require("../utils/SuccessHandler");
+const { createHtmlTemplate } = require("../utils/createHtmlTemplate");
 const sendMail = require("../utils/sendMail");
 
 //register
@@ -77,39 +78,26 @@ const register = async (req, res) => {
 
 // //request email verification token
 const requestEmailToken = async (req, res) => {
-  // #swagger.tags = ['auth']
-
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
-    if (!user) {
+    if (! user) {
       return ErrorHandler("User does not exist", 400, req, res);
     }
     const emailVerificationToken = Math.floor(100000 + Math.random() * 900000);
-    console.log("🚀 ~ file: authController.js:79 ~ requestEmailToken ~ emailVerificationToken:", emailVerificationToken)
     const emailVerificationTokenExpires = new Date(Date.now() + 10 * 60 * 1000);
     user.emailVerificationToken = emailVerificationToken;
     user.emailVerificationTokenExpires = emailVerificationTokenExpires;
     await user.save();
-    const message = `Your email verification token is ${emailVerificationToken} and it expires in 10 minutes`;
-    const subject = `Email verification token`;
-    await sendMail(email, subject, message)
-    // .then(result=>{
-    //   console.log("🚀 ~ file: authController.js:89 ~ awaitsendMail ~ result:", result)
-    //   if(result){
-    return SuccessHandler(
-      `Email verification token sent to ${email}`,
-      200,
-      res
-    );
-    //   }else{
-    //     return ErrorHandler("invalid email", 500, req, res);
-    //   }
-    // }).catch((error) => {
-    //   console.log("🚀 ~ file: authController.js:95 ~ awaitsendMail ~ error:", error)
-    //   return ErrorHandler("invalid email", 500, req, res);
-    // })
 
+    const subject = "Email Verification Token";
+    const textMessage = `Your email verification token is ${emailVerificationToken} and it expires in 10 minutes.`;
+    const heading= "Account Verification";
+    const message = "Thank you for registering with us. To complete your email verification, please use the following token:";
+    const htmlContent = createHtmlTemplate(heading, message, emailVerificationToken );
+    await sendMail(email, subject, textMessage, htmlContent );
+
+    return SuccessHandler(`Email verification token sent to ${email}`, 200, res);
   } catch (error) {
     return ErrorHandler(error.message, 500, req, res);
   }
@@ -224,9 +212,12 @@ const forgotPassword = async (req, res) => {
     user.passwordResetToken = passwordResetToken;
     user.passwordResetTokenExpires = passwordResetTokenExpires;
     await user.save();
-    const message = `Your password reset token is ${passwordResetToken} and it expires in 10 minutes`;
+    const textMessage = `Your password reset token is ${passwordResetToken} and it expires in 10 minutes`;
+    const heading= "Password Reset Request";
+    const message = "You are receiving this email because you (or someone else) have requested the reset of the password for your account. Please use the following token to reset your password:";
+    const htmlContent = createHtmlTemplate(heading, message, passwordResetToken );
     const subject = `Password reset token`;
-    await sendMail(email, subject, message);
+    await sendMail(email, subject, textMessage, htmlContent );
     return SuccessHandler(`Password reset token sent to ${email}`, 200, res);
   } catch (error) {
     return ErrorHandler(error.message, 500, req, res);
@@ -259,57 +250,6 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// //update password
-// const updatePassword = async (req, res) => {
-//   // #swagger.tags = ['auth']
-
-//   try {
-//     const { currentPassword, newPassword } = req.body;
-//     if (
-//       !newPassword.match(
-//         /(?=[A-Za-z0-9@#$%^&+!=]+$)^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[@#$%^&+!=])(?=.{8,}).*$/
-//       )
-//     ) {
-//       return ErrorHandler(
-//         "Password must contain at least 8 characters, 1 uppercase, 1 lowercase, 1 number and 1 special character",
-//         400,
-//         req,
-//         res
-//       );
-//     }
-//     const user = await User.findById(req.user.id).select("+password");
-//     const isMatch = await user.comparePassword(currentPassword);
-//     if (!isMatch) {
-//       return ErrorHandler("Invalid credentials", 400, req, res);
-//     }
-//     const samePasswords = await user.comparePassword(newPassword);
-//     if (samePasswords) {
-//       return ErrorHandler(
-//         "New password cannot be same as old password",
-//         400,
-//         req,
-//         res
-//       );
-//     }
-//     user.password = newPassword;
-//     await user.save();
-//     return SuccessHandler("Password updated successfully", 200, res);
-//   } catch (error) {
-//     return ErrorHandler(error.message, 500, req, res);
-//   }
-// };
-
-// export default {
-//   register,
-//   login
-//   // requestEmailToken,
-//   // verifyEmail,
-//   // logout,
-//   // forgotPassword,
-//   // resetPassword,
-//   // updatePassword
-// };
-
 module.exports = {
   register,
   login,
@@ -319,3 +259,4 @@ module.exports = {
   forgotPassword,
   resetPassword,
 };
+

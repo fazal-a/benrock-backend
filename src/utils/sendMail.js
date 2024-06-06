@@ -4,35 +4,30 @@ const sendgridTransport = require("nodemailer-sendgrid-transport");
 dotenv.config({ path: "./src/config/config.env" });
 const { createTransport } = nodemailer;
 
-const sendMail =  (email, subject, text) => {
-  return new Promise(async(resolve,reject)=>{
-  console.log("🚀 ~ file: sendMail.js:8 ~ sendMail ~ email:1",)
-   const transport = createTransport(
-     sendgridTransport({
-       auth: {
-         api_key: process.env.NODEMAILER_API_KEY,
-       },
-     })
-   );
-   console.log("🚀 ~ file: sendMail.js:8 ~ sendMail ~ email:1",)
-   await transport.sendMail({
-     from: "info@rmstechknowledgy.com",
-     to: email,
-     subject,
-     text,
-   })
-   .then((result) => {
-     console.log("🚀 ~ file: sendMail.js:25 ~ .then ~ result:", result)
-    return resolve(result)
-   	}).catch((err) => {
-     	console.log("🚀 ~ file: sendMail.js:27 ~ .then ~ err:", err)
-    	return reject(err)
-   	
-   })
+const transporter = nodemailer.createTransport(
+    sendgridTransport({
+        auth: {
+            api_key: process.env.NODEMAILER_API_KEY,
+        },
+    })
+);
 
- })
+const sendMail = async (email, subject, textMessage, htmlContent) => {
+    try {
 
-  console.log("🚀 ~ file: sendMail.js:8 ~ sendMail ~ email, subject, text:", email, subject, text)
+        await transporter.sendMail({
+            from: "fazal.a@pacsquare.com",
+            to: email,
+            subject: subject,
+            text: textMessage,
+            html: htmlContent,
+        });
+        console.log("Email sent successfully");
+    } catch (err) {
+        console.error("Error sending email:", err);
+        throw err;
+    }
 };
+
 
 module.exports = sendMail;
