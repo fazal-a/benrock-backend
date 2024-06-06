@@ -236,6 +236,40 @@ const getPaginatedAttachments = async (req, res) => {
   }
 };
 
+const getPopularAttachments = async (req, res) => {
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 5;
+  const skip = (page - 1) * limit;
+
+  try {
+    const attachments = await Attachment.find({})
+        .sort({ clicks: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('createdBy', 'name email photo')
+        .lean();  // Add .lean() to get plain JavaScript objects instead of Mongoose documents
+
+    const total = await Attachment.countDocuments();
+
+    res.status(200).json({
+      status: "success",
+      data: attachments.map(attachment => ({
+        ...attachment,
+        clicks: attachment.clicks || 0  // Ensure the clicks field is included correctly
+      })),
+      page,
+      pages: Math.ceil(total / limit),
+      total,
+    });
+  } catch (error) {
+    console.error("Error fetching paginated attachments:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Server error while retrieving paginated attachments",
+    });
+  }
+};
+
 
 
 // export default { uploadPhoto, getAttachmentsByUser };
@@ -245,5 +279,6 @@ module.exports = {
   getRecentAttachments,
   getNearByAttachments,
   addClick,
-  getPaginatedAttachments
+  getPaginatedAttachments,
+  getPopularAttachments
 };

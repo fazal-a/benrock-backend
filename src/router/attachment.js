@@ -18,5 +18,8 @@ router
 router
   .route("/getPaginatedAttachments")
   .get(isAuthenticated, attachment?.getPaginatedAttachments);
+router
+  .route("/getPopularAttachments")
+  .get(isAuthenticated, attachment?.getPopularAttachments);
 
 module.exports = router;
