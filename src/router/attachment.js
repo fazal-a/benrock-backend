@@ -7,9 +7,6 @@ const isAuthenticated = require("../middleware/auth");
 router.route("/").get(isAuthenticated, attachment?.getAttachmentsByUser);
 router.route("/").post(isAuthenticated, attachment?.uploadPhoto);
 router
-  .route("/getRecentAttachments")
-  .get(isAuthenticated, attachment?.getRecentAttachments);
-router
   .route("/getNearByAttachments")
   .get(isAuthenticated, attachment?.getNearByAttachments);
 router
@@ -18,6 +15,9 @@ router
 router
   .route("/getRecentAttachments")
   .get(isAuthenticated, attachment?.getRecentAttachments);
+router
+  .route("/getRecentFeed")
+  .get(isAuthenticated, attachment?.getRecentFeed);
 router
   .route("/getPopularAttachments")
   .get(isAuthenticated, attachment?.getPopularAttachments);

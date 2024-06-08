@@ -11,11 +11,11 @@ exports.uploadImages = async (files, req, res, next) => {
 
       const imagesUrl = [];
       const s3 = new S3Client({
-        endpoint: "https://s3.us-east-005.backblazeb2.com",
-        region: "us-east-005",
+        endpoint: "https://s3.us-west-002.backblazeb2.com",
+        region: "us-west-002",
         credentials: {
-          accessKeyId: "005326224938cc50000000001",
-          secretAccessKey: "K0057EaMD5KCQwqPe+Hn21JoCknftiA"
+          accessKeyId: "0028aca3e67f6db0000000002",
+          secretAccessKey: "K002WmPBidpTgcmAYEFORBJCJ/+JPXY"
         }
       });
 
@@ -29,7 +29,7 @@ exports.uploadImages = async (files, req, res, next) => {
 
       images.forEach(async (item) => {
         const params = {
-          Bucket: "social-app-project",
+          Bucket: "benrock",
           Key: item?.name,
           Body: item.buffer
         };

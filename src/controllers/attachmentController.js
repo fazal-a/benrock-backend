@@ -203,6 +203,85 @@ const getRecentAttachments = async (req, res) => {
   }
 };
 
+const getRecentFeed = async (req, res) => {
+  // #swagger.tags = ['photo'];
+
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 5;
+  const skip = (page - 1) * limit;
+  const radiusInMiles = 100;
+
+  try {
+    let { location } = req.user;
+    let longitude = location?.coordinates?.[0];
+    let latitude = location?.coordinates?.[1];
+
+    let nearbyAttachments = [];
+    let otherAttachments = [];
+    let nearbyUsers = [];
+
+    if (latitude && longitude) {
+      nearbyUsers = await User.find({
+        location: {
+          $near: {
+            $geometry: {
+              type: "Point",
+              coordinates: [longitude, latitude]
+            },
+            $maxDistance: parseFloat(radiusInMiles) * 1609.34 // convert to meters
+          }
+        }
+      }).select("_id");
+
+      console.log("----i am in recentFeed with nearbyUsers::::", nearbyUsers);
+
+      nearbyAttachments = await Attachment.find({
+        createdBy: { $in: nearbyUsers.map(v => v._id) },
+        createdAt: { $gte: new Date().setUTCHours(0, 0, 0, 0) } // Filter for attachments created today
+      })
+          .sort({ createdAt: -1 })
+          .populate("createdBy", "name email photo")
+          .lean();
+    }
+
+    // Fetch remaining attachments
+    otherAttachments = await Attachment.find({
+      createdBy: { $nin: nearbyUsers.map(v => v._id) }, // Exclude nearby users' attachments
+      createdAt: { $gte: new Date().setUTCHours(0, 0, 0, 0) } // Filter for attachments created today
+    })
+        .sort({ createdAt: -1 })
+        .populate("createdBy", "name email photo")
+        .lean();
+
+    // Combine both lists
+    let allAttachments = nearbyAttachments.concat(otherAttachments);
+
+    // Pagination logic
+    const total = allAttachments.length;
+    const paginatedAttachments = allAttachments.slice(skip, skip + limit);
+
+    res.status(200).json({
+      status: "success",
+      data: paginatedAttachments.map(attachment => ({
+        ...attachment,
+        clicks: attachment.clicks || 0,
+        likes: attachment.likes || 0
+      })),
+      page,
+      pages: Math.ceil(total / limit),
+      total,
+    });
+  } catch (error) {
+    console.log("----i am in recentFeed with error::::", error);
+    console.error(error);
+    res.status(500).json({
+      status: "error",
+      message: "Server error while retrieving recent feed",
+    });
+  }
+};
+
+
 const getPopularAttachments = async (req, res) => {
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 5;
@@ -247,5 +326,6 @@ module.exports = {
   getNearByAttachments,
   addClick,
   getRecentAttachments,
-  getPopularAttachments
+  getPopularAttachments,
+  getRecentFeed
 };

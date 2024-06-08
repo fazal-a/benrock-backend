@@ -145,22 +145,27 @@ const login = async (req, res) => {
 
     let result = await user.comparePassword(password);
     if (result) {
-      // user.latitude = latitude;
-      // user.longitude = longitude;
-      user.location = {
-        type: "Point",
-        coordinates: [parseFloat(longitude), parseFloat(latitude)],
-      };
-      await user.save()
+      // Check if the coordinates are the default ones for New York
+      const defaultLatitude = '40.7128';
+      const defaultLongitude = '-74.0060';
+
+      if (latitude !== defaultLatitude || longitude !== defaultLongitude) {
+        user.location = {
+          type: "Point",
+          coordinates: [parseFloat(longitude), parseFloat(latitude)],
+        };
+        await user.save();
+      }
+
       let jwtToken = await user.getJWTToken();
 
       return SuccessHandler(
-        {
-          token: jwtToken,
-          user
-        },
-        200,
-        res
+          {
+            token: jwtToken,
+            user
+          },
+          200,
+          res
       );
     } else {
       return ErrorHandler("Invalid credentials", 400, req, res);
@@ -170,6 +175,9 @@ const login = async (req, res) => {
     return ErrorHandler(error, 500, req, res);
   }
 };
+
+module.exports = login;
+
 
 const getUsers = async (req, res) => {
   // #swagger.tags = ['auth']
